@@ -1,8 +1,13 @@
 # IoT Oracle
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
+
 A deterministic, auditable **Oracle** that ingests telemetry from IoT producers, verifies integrity, aggregates to daily/weekly digests, computes **tCO2e avoided**, and exposes **stable APIs** for consumers.
 
-## Features
+## 🌟 Features
 
 - **Multi-source Ingestion**: HTTP push, MQTT subscribe, and pull from iot-solar-sim
 - **Data Integrity**: SHA-256 row hashing and Merkle tree verification
@@ -12,13 +17,14 @@ A deterministic, auditable **Oracle** that ingests telemetry from IoT producers,
 - **Observability**: Comprehensive logging, metrics, and health checks
 - **APIs**: Public read APIs and admin management endpoints
 
+
 ## Quick Start
 
 ### Using Docker Compose
 
 1. **Clone and setup**:
    ```bash
-   git clone <repository>
+   git clone https://github.com/shantanuvr/iot-oracle.git
    cd iot-oracle
    cp env.example .env
    # Edit .env with your configuration
@@ -251,14 +257,31 @@ npm run test:e2e
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
-## Contributing
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Add tests
-5. Submit a pull request
+4. Add tests for new functionality
+5. Ensure all tests pass (`npm test`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
 
-## License
+## 📄 License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built for the Carbon Credit ecosystem
+- Designed for deterministic, auditable data processing
+- Integrates with blockchain anchoring for immutable verification
+
+## 📞 Support
+
+- 📖 [Documentation](docs/)
+- 🐛 [Issues](https://github.com/shantanuvr/iot-oracle/issues)
+- 💬 [Discussions](https://github.com/shantanuvr/iot-oracle/discussions)
