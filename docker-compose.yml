@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: iot-oracle-postgres
+    environment:
+      POSTGRES_DB: iot_oracle
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iot-oracle-network
+
+  # Redis for job queues
+  redis:
+    image: redis:7-alpine
+    container_name: iot-oracle-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iot-oracle-network
+
+  # MQTT broker
+  mqtt:
+    image: eclipse-mosquitto:2.0
+    container_name: iot-oracle-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "test", "-m", "test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iot-oracle-network
+
+  # IoT Oracle application
+  iot-oracle:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iot-oracle-app
+    environment:
+      NODE_ENV: production
+      PORT: 4201
+      DATABASE_URL: postgres://postgres:password@postgres:5432/iot_oracle
+      REDIS_URL: redis://redis:6379
+      MQTT_URL: mqtt://mqtt:1883
+      SIM_BASE_URL: http://iot-solar-sim:4200
+      ANCHOR_ENABLED: true
+      ADAPTER_API_URL: http://adapter-api:4100
+      ADAPTER_API_KEY: your-adapter-api-key
+      HASH_PRECISION_POWER_DP: 3
+      HASH_PRECISION_ENERGY_DP: 2
+      HASH_PRECISION_TEMP_DP: 1
+      HASH_PRECISION_IRR_DP: 1
+      DEFAULT_BASELINE_FACTOR_KG_PER_KWH: 0.82
+      DEFAULT_TIMEZONE: UTC
+      JWT_SECRET: your-jwt-secret-key-minimum-32-characters
+      ADMIN_API_KEY: your-admin-api-key-minimum-16-characters
+    ports:
+      - "4201:4201"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mqtt:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4201/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - iot-oracle-network
+    restart: unless-stopped
+
+  # IoT Solar Simulator (for testing)
+  iot-solar-sim:
+    image: node:20-alpine
+    container_name: iot-solar-sim
+    working_dir: /app
+    command: sh -c "npm install -g iot-solar-sim && iot-solar-sim --port 4200"
+    ports:
+      - "4200:4200"
+    networks:
+      - iot-oracle-network
+    profiles:
+      - testing
+
+  # Registry Adapter API (mock for testing)
+  adapter-api:
+    image: node:20-alpine
+    container_name: adapter-api
+    working_dir: /app
+    command: sh -c "npm install -g json-server && echo '{\"anchors\": []}' > db.json && json-server --port 4100 --host 0.0.0.0 db.json"
+    ports:
+      - "4100:4100"
+    networks:
+      - iot-oracle-network
+    profiles:
+      - testing
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  iot-oracle-network:
+    driver: bridge
